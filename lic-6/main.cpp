@@ -346,11 +346,13 @@ void findSpanningForest(Graph &g, Graph &sf)
 
 void mstPrim(Graph &g, Graph &sf)
 {
+	// make new empty graph
 	sf = Graph(num_vertices(g));
 	
 	// setup and mark NIL
 	clearVisited(g);
 	clearMarked(g);
+	// create list of vertices to init the minQ
 	vector<Vertex> list2;
 	NodeIteratorRange vitR = vertices(g);
 	for (NodeIterator n = vitR.first; n != vitR.second; ++n)
@@ -362,13 +364,18 @@ void mstPrim(Graph &g, Graph &sf)
 	Vertex start = 0;
 	g[start].weight = 0;
 	
+	// init minQ to contain all v in G
 	heapV<Vertex, Graph> q;
 	q.initializeMinHeap(list2, g);
+	// while q is not empty
 	while (q.size() > 0)
 	{
+		// take the lowest key node from q
 		Vertex u = q.extractMinHeapMinimum(g);
+		// if that key has a predecessor
 		if (g[u].pred != LargeValue)
 		{
+			// add undirected edge with weight key between them
 			Edge e = edge(u, g[u].pred, g);
 			int weight = g[e.first].weight;
 			Edge e1 = add_edge(u, g[u].pred, sf);
@@ -377,18 +384,23 @@ void mstPrim(Graph &g, Graph &sf)
 			sf[e2.first].weight = weight;
 		}
 
+		// loop over all adjacents to u
 		AdjIteratorRange aitR = adjacent_vertices(u, g);
 		for (AdjIterator v = aitR.first; v != aitR.second; ++v)
 		{
 			Vertex vert_v = *v;
 			try
 			{
+				// check if v in q
 				q.getIndex(vert_v);
+				// if not, get the edge between u and v
 				Edge e = edge(u, vert_v, g);
+				// update pred and key if new key is lower than current
 				if (g[e.first].weight < g[vert_v].weight)
 				{
 					g[vert_v].pred = u;
 					g[vert_v].weight = g[e.first].weight;
+					// reorganzize minQ to maintain property
 					q.minHeapDecreaseKey(q.getIndex(vert_v), g);
 				}
 			}
