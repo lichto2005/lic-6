@@ -344,6 +344,62 @@ void findSpanningForest(Graph &g, Graph &sf)
 	}
 }
 
+void mstPrim(Graph &g, Graph &sf)
+{
+	sf = Graph(num_vertices(g));
+	
+	// setup and mark NIL
+	clearVisited(g);
+	clearMarked(g);
+	vector<Vertex> list2;
+	NodeIteratorRange vitR = vertices(g);
+	for (NodeIterator n = vitR.first; n != vitR.second; ++n)
+	{
+		list2.push_back(*n);
+		g[*n].pred = LargeValue;
+		g[*n].weight = LargeValue;
+	}
+	Vertex start = 0;
+	g[start].weight = 0;
+	
+	heapV<Vertex, Graph> q;
+	q.initializeMinHeap(list2, g);
+	while (q.size() > 0)
+	{
+		Vertex u = q.extractMinHeapMinimum(g);
+		if (g[u].pred != LargeValue)
+		{
+			Edge e = edge(u, g[u].pred, g);
+			int weight = g[e.first].weight;
+			Edge e1 = add_edge(u, g[u].pred, sf);
+			Edge e2 = add_edge(g[u].pred, u, sf);
+			sf[e1.first].weight = weight;
+			sf[e2.first].weight = weight;
+		}
+
+		AdjIteratorRange aitR = adjacent_vertices(u, g);
+		for (AdjIterator v = aitR.first; v != aitR.second; ++v)
+		{
+			Vertex vert_v = *v;
+			try
+			{
+				q.getIndex(vert_v);
+				Edge e = edge(u, vert_v, g);
+				if (g[e.first].weight < g[vert_v].weight)
+				{
+					g[vert_v].pred = u;
+					g[vert_v].weight = g[e.first].weight;
+					q.minHeapDecreaseKey(q.getIndex(vert_v), g);
+				}
+			}
+			catch (rangeError e)
+			{
+				// noop
+			}
+		}
+	}
+}
+
 int main()
 {
 	try
@@ -374,6 +430,13 @@ int main()
 		Graph sf;
 		findSpanningForest(g, sf);
 		cout << "\nSpanning Forest\n----------------------------\n";
+		cout << "Is cyclic: " << isCyclic(sf) << endl;
+		cout << "Is connected: " << isConnected(sf) << endl;
+
+		cout << sf;
+
+		mstPrim(g, sf);
+		cout << "\nMST Prim\n----------------------------\n";
 		cout << "Is cyclic: " << isCyclic(sf) << endl;
 		cout << "Is connected: " << isConnected(sf) << endl;
 
